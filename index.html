@@ -12,11 +12,10 @@
 
 <body>
     <div class="container-fluid" id="app">
-        <div class="row">
-            <div class="col-md-12">
-                repo: <a href="https://github.com/wuyudi/PL0-Lexical"
-                    target="_blank">https://github.com/wuyudi/PL0-Lexical</a>
-            </div>
+        <div class="row col-md-12">
+            repo: <a href="https://github.com/wuyudi/PL0-Lexical" target="_blank">https://github.com/wuyudi/PL0-Lexical
+            </a>
+
         </div>
         <div class="row">
             <div class="col-md-6">
@@ -24,7 +23,7 @@
                     输入 PL/0 代码
                 </div>
                 <div class="col-md-12">
-                    <textarea class="form-control" id="input" v-model="file">{{file}}</textarea>
+                    <textarea class="form-control" id="input" v-model="file" style="height:300px">{{file}}</textarea>
                 </div>
                 <div class="col-md-12">
                     <button @click="demo" class="btn btn-success"> demo </button>
@@ -33,11 +32,10 @@
             </div>
             <div class="col-md-6">
                 <div class="col-md-12">
-
                     输入关键词 , 用回车分隔
                 </div>
                 <div class="col-md-12">
-                    <textarea class="form-control" id="kw" v-model="kw">{{kw}}</textarea>
+                    <textarea class="form-control" id="kw" v-model="kw" style="height:300px">{{kw}}</textarea>
                 </div>
                 <div class="col-md-12">
                     <button @click="keywordsInit" class="btn btn-success"> keywordsInit </button>
@@ -45,11 +43,22 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-12">
-                <div v-for="item in lexer(this.file,kw)" class="col-md-12">
-                    {{ item }}
-                </div>
-            </div>
+            <table class="col-md-12 table">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">名</th>
+                        <th scope="col">类型</th>
+                        <th scope="col">值</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="item in lexer(this.file,kw)">
+                        <th scope="row">{{item[0]}}</th>
+                        <td v-for="td in item.splice(1)">{{td}}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </body>

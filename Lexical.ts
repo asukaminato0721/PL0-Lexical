@@ -6,7 +6,7 @@ function lexer(file: string, kw: string) {
   const SPACE = " ";
   const TABLE = "\t";
   const RETURN = "\n";
-  function strEnum<T extends string>(o: Array<T>): { [K in T]: number } {
+  function strEnum<T extends string>(o: T[]): { [K in T]: number } {
     return o.reduce((res, key, cur) => {
       res[key] = cur;
       res[cur] = key;
@@ -40,7 +40,7 @@ function lexer(file: string, kw: string) {
   ]);
 
   let ReservedWordNameVsTypeTable = new Map(
-    kw.split("\n").map((k) => [k, eval(`WORD_TYPE_ENUM.${k.toUpperCase()}`)])
+    kw.split("\n").map((k) => [k, WORD_TYPE_ENUM[k.toUpperCase()]])
   );
   const SingleCharacterWordTypeTable = new Map([
     ["+", WORD_TYPE_ENUM.PLUS],
@@ -69,15 +69,12 @@ function lexer(file: string, kw: string) {
   let g_Words = Array<WORD_STRUCT>();
 
   function LexicalAnalysis() {
-    res.push(["\n ------------------Lexical Analysis Begin! ------------\n"]);
     let nResult = GetAWord();
     while (nResult === 1 && g_Words.length > 0) {
       PrintInLexis(g_Words.length - 1);
       log("打印了一个");
       nResult = GetAWord();
     }
-
-    res.push(["-------------------Lexical Analysis Finished---------------\n"]);
   }
   function* generate() {
     for (const char of file) {
