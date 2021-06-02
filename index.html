@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="row">
+            输入 PL/0 代码
+            <textarea id="input" v-model="file" style="height:600px;width:300px">{{file}}</textarea>
+            <button @click="demo"> demo </button>
+            <button @click="clear"> clear </button>
+        </div>
+        <div class="result">
+            <div v-for="item in lexer(this.file)">
+                {{ item }}
+            </div>
+        </div>
+    </div>
+</body>
+<style>
+    #app {
+        display: flex;
+        flex-direction: row;
+    }
+
+    #input {
+        height: 300px;
+    }
+
+    .row {
+        width: 30%;
+    }
+
+    button {
+        width: 100px;
+        height: 20px;
+    }
+
+    .result {
+        width: 500px;
+        height: 400px;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="./Lexical.js"></script>
+
+<script>
+    var vm = new Vue({
+        el: '#app',
+        data: {
+            file: "",
+        },
+        methods: {
+            demo() {
+                this.file = `const c1=2,c2=4;
+var x,num,sum;
+procedure func1;
+var y;
+y:=c1;
+begin
+sum:=0;
+read(x);
+num:=10-x/c2;
+if num<-2 then
+    x:=-c1;
+if num>2+2*c2 then
+    x:=8-c2;
+    while x<num do
+        begin
+            sum:=sum+x*x;
+            x:=x+2;
+        end;
+    call func1;
+    sum:=-10*c2/(2*sum+num);
+    write(num,sum);
+    ;
+end.`;
+            },
+            clear() {
+                this.file = ``;
+            }
+        }
+    }
+    )
+</script>
+
+</html>
