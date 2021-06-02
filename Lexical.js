@@ -52,9 +52,9 @@ function lexer(file, kw) {
         ["#", WORD_TYPE_ENUM.NEQ],
         [";", WORD_TYPE_ENUM.SEMICOLON],
     ]);
+    let 目前行 = 1;
     const RESERVED_WORDS = new Set(kw.split("\n"));
     let EOF = false;
-    let g_nLineNo = 0;
     let g_Words = Array();
     function LexicalAnalysis() {
         let nResult = GetAWord();
@@ -64,28 +64,22 @@ function lexer(file, kw) {
             nResult = GetAWord();
         }
     }
+    let cACharacter = " ";
     function* generate() {
         for (const char of file) {
-            if (char === RETURN) {
-                g_nLineNo++;
+            if (char === "\n") {
+                目前行++;
             }
             yield char;
         }
     }
-    let cACharacter = " ";
     const gen = generate();
     const GetACharacterFromFile = () => {
         const o = gen.next();
-        if (o.done) {
-            EOF = true;
-            cACharacter = "\n";
-            return;
-        }
-        else {
-            //@ts-ignore
-            cACharacter = o.value;
-            EOF = false;
-        }
+        //@ts-ignore
+        cACharacter = o.value ?? "\n";
+        // @ts-ignore
+        EOF = o.done;
     };
     function GetAWord() {
         log("GetAWord");
@@ -115,7 +109,7 @@ function lexer(file, kw) {
                             ? ReservedWordNameVsTypeTable.get(szAWord.join(""))
                             : WORD_TYPE_ENUM.IDENTIFIER,
                         szName: szAWord.join(""),
-                        nLineNo: g_nLineNo,
+                        nLineNo: 目前行,
                         nNumberValue,
                     });
                     szAWord = [];
@@ -138,7 +132,7 @@ function lexer(file, kw) {
                         eType: WORD_TYPE_ENUM.NUMBER,
                         szName: szAWord.join(""),
                         nNumberValue: parseInt(szAWord.join("")),
-                        nLineNo: g_nLineNo,
+                        nLineNo: 目前行,
                     });
                     log(szAWord, "isdigit");
                     szAWord = [];
@@ -157,7 +151,7 @@ function lexer(file, kw) {
                     g_Words.push({
                         eType: WORD_TYPE_ENUM.ASSIGN,
                         szName: ":=",
-                        nLineNo: g_nLineNo,
+                        nLineNo: 目前行,
                         nNumberValue,
                     });
                     GetACharacterFromFile();
@@ -171,7 +165,7 @@ function lexer(file, kw) {
                     g_Words.push({
                         eType: WORD_TYPE_ENUM.LEQ,
                         szName: "<=",
-                        nLineNo: g_nLineNo,
+                        nLineNo: 目前行,
                         nNumberValue,
                     });
                     GetACharacterFromFile();
@@ -181,7 +175,7 @@ function lexer(file, kw) {
                     g_Words.push({
                         eType: WORD_TYPE_ENUM.LES,
                         szName: "<",
-                        nLineNo: g_nLineNo,
+                        nLineNo: 目前行,
                         nNumberValue,
                     });
                     return OK;
@@ -194,7 +188,7 @@ function lexer(file, kw) {
                     g_Words.push({
                         eType: WORD_TYPE_ENUM.GEQ,
                         szName: ">=",
-                        nLineNo: g_nLineNo,
+                        nLineNo: 目前行,
                         nNumberValue,
                     });
                     GetACharacterFromFile();
@@ -203,7 +197,7 @@ function lexer(file, kw) {
                     g_Words.push({
                         eType: WORD_TYPE_ENUM.GTR,
                         szName: ">",
-                        nLineNo: g_nLineNo,
+                        nLineNo: 目前行,
                         nNumberValue,
                     });
                 }
@@ -211,11 +205,10 @@ function lexer(file, kw) {
             }
             else {
                 g_Words.push({
-                    //@ts-ignore
                     eType: SingleCharacterWordTypeTable.get(cACharacter) ??
                         WORD_TYPE_ENUM.INVALID_WORD,
                     szName: cACharacter,
-                    nLineNo: g_nLineNo,
+                    nLineNo: 目前行,
                     nNumberValue,
                 });
                 GetACharacterFromFile();
@@ -227,51 +220,22 @@ function lexer(file, kw) {
     function PrintInLexis(nIndex) {
         let szWordName = g_Words[nIndex].szName;
         let szWordType = WordTypeToString(g_Words[nIndex].eType);
+        let line = g_Words[nIndex].nLineNo;
         switch (g_Words[nIndex].eType) {
             case WORD_TYPE_ENUM.IDENTIFIER:
-                res.push([nIndex, szWordName, szWordType]);
+                res.push([nIndex, line, szWordName, szWordType]);
                 break;
             case WORD_TYPE_ENUM.NUMBER:
                 res.push([
                     nIndex,
+                    line,
                     szWordName,
                     szWordType,
                     g_Words[nIndex].nNumberValue,
                 ]);
                 break;
-            case WORD_TYPE_ENUM.CONST:
-            case WORD_TYPE_ENUM.VAR:
-            case WORD_TYPE_ENUM.PROCEDURE:
-            case WORD_TYPE_ENUM.BEGIN:
-            case WORD_TYPE_ENUM.END:
-            case WORD_TYPE_ENUM.IF:
-            case WORD_TYPE_ENUM.THEN:
-            case WORD_TYPE_ENUM.WHILE:
-            case WORD_TYPE_ENUM.DO:
-            case WORD_TYPE_ENUM.WRITE:
-            case WORD_TYPE_ENUM.READ:
-            case WORD_TYPE_ENUM.CALL:
-            case WORD_TYPE_ENUM.LEFT_PARENTHESIS:
-            case WORD_TYPE_ENUM.RIGHT_PARENTHESIS:
-            case WORD_TYPE_ENUM.COMMA:
-            case WORD_TYPE_ENUM.SEMICOLON:
-            case WORD_TYPE_ENUM.PERIOD:
-            case WORD_TYPE_ENUM.PLUS:
-            case WORD_TYPE_ENUM.MINUS:
-            case WORD_TYPE_ENUM.MULTIPLY:
-            case WORD_TYPE_ENUM.DIVIDE:
-            case WORD_TYPE_ENUM.ODD:
-            case WORD_TYPE_ENUM.EQL:
-            case WORD_TYPE_ENUM.NEQ:
-            case WORD_TYPE_ENUM.LES:
-            case WORD_TYPE_ENUM.LEQ:
-            case WORD_TYPE_ENUM.GTR:
-            case WORD_TYPE_ENUM.GEQ:
-            case WORD_TYPE_ENUM.ASSIGN:
-                res.push([nIndex, szWordName, szWordType]);
-                break;
             default:
-                res.push([nIndex, szWordName, szWordType]);
+                res.push([nIndex, line, szWordName, szWordType]);
         }
     }
     function WordTypeToString(T) {
@@ -280,10 +244,7 @@ function lexer(file, kw) {
     LexicalAnalysis();
     return res;
 }
-/*
-console.log(
-  lexer(
-    `const c1=2,c2=4;
+console.log(lexer(`const c1=2,c2=4;
 var x,num,sum;
 procedure func1;
 var y;
@@ -293,20 +254,19 @@ begin
   read(x);
   num:=10-x/c2;
   if num<-2 then
-    x:=-c1;
+	x:=-c1;
   if num>2+2*c2 then
-    x:=8-c2;
-    while x<num do
-        begin
-            sum:=sum+x*x;
-            x:=x+2;
-        end;
-    call func1;
-    sum:=-10*c2/(2*sum+num);
-    write(num,sum);
-    ;
-end.`,
-    `begin
+	x:=8-c2;
+	while x<num do
+		begin
+			sum:=sum+x*x;
+			x:=x+2;
+		end;
+	call func1;
+	sum:=-10*c2/(2*sum+num);
+	write(num,sum);
+	;
+end.`, `begin
 call
 const
 do
@@ -318,7 +278,4 @@ read
 then
 var
 while
-write`
-  )
-);
-*/
+write`));
