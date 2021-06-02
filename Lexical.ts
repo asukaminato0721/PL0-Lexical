@@ -1,4 +1,4 @@
-function lexer(file: string) {
+function lexer(file: string, kw: string) {
   let res: Array<string | number>[] = [];
   const log = false ? console.log : (...s: string[]) => {};
   const OK = 1;
@@ -6,55 +6,42 @@ function lexer(file: string) {
   const SPACE = " ";
   const TABLE = "\t";
   const RETURN = "\n";
-  enum WORD_TYPE_ENUM {
-    INVALID_WORD,
-    IDENTIFIER,
-    NUMBER,
-    CONST,
-    VAR,
-    PROCEDURE,
-    BEGIN,
-    END,
-    IF,
-    THEN,
-    WHILE,
-    DO,
-    WRITE,
-    READ,
-    CALL,
-    LEFT_PARENTHESIS,
-    RIGHT_PARENTHESIS,
-    COMMA,
-    SEMICOLON,
-    PERIOD,
-    PLUS,
-    MINUS,
-    MULTIPLY,
-    DIVIDE,
-    ODD,
-    EQL,
-    NEQ,
-    LES,
-    LEQ,
-    GTR,
-    GEQ,
-    ASSIGN,
+  function strEnum<T extends string>(o: Array<T>): { [K in T]: number } {
+    return o.reduce((res, key, cur) => {
+      res[key] = cur;
+      res[cur] = key;
+      return res;
+    }, Object.create(null));
   }
-  const ReservedWordNameVsTypeTable = new Map([
-    ["begin", WORD_TYPE_ENUM.BEGIN],
-    ["call", WORD_TYPE_ENUM.CALL],
-    ["const", WORD_TYPE_ENUM.CONST],
-    ["do", WORD_TYPE_ENUM.DO],
-    ["end", WORD_TYPE_ENUM.END],
-    ["if", WORD_TYPE_ENUM.IF],
-    ["odd", WORD_TYPE_ENUM.ODD],
-    ["procedure", WORD_TYPE_ENUM.PROCEDURE],
-    ["read", WORD_TYPE_ENUM.READ],
-    ["then", WORD_TYPE_ENUM.THEN],
-    ["var", WORD_TYPE_ENUM.VAR],
-    ["while", WORD_TYPE_ENUM.WHILE],
-    ["write", WORD_TYPE_ENUM.WRITE],
+  let WORD_TYPE_ENUM = strEnum([
+    ...new Set([
+      "INVALID_WORD",
+      "IDENTIFIER",
+      "NUMBER",
+      "LEFT_PARENTHESIS",
+      "RIGHT_PARENTHESIS",
+      "COMMA",
+      "SEMICOLON",
+      "PERIOD",
+      "PLUS",
+      "MINUS",
+      "MULTIPLY",
+      "DIVIDE",
+      "ODD",
+      "EQL",
+      "NEQ",
+      "LES",
+      "LEQ",
+      "GTR",
+      "GEQ",
+      "ASSIGN",
+      ...kw.toUpperCase().split("\n"),
+    ]),
   ]);
+
+  let ReservedWordNameVsTypeTable = new Map(
+    kw.split("\n").map((k) => [k, eval(`WORD_TYPE_ENUM.${k.toUpperCase()}`)])
+  );
   const SingleCharacterWordTypeTable = new Map([
     ["+", WORD_TYPE_ENUM.PLUS],
     ["-", WORD_TYPE_ENUM.MINUS],
@@ -70,25 +57,11 @@ function lexer(file: string) {
   ]);
   interface WORD_STRUCT {
     szName: string;
-    eType: WORD_TYPE_ENUM;
+    eType: number;
     nNumberValue: number;
     nLineNo: number;
   }
-  const RESERVED_WORDS = new Set([
-    "begin",
-    "call",
-    "const",
-    "do",
-    "end",
-    "if",
-    "odd",
-    "procedure",
-    "read",
-    "then",
-    "var",
-    "while",
-    "write",
-  ]);
+  const RESERVED_WORDS = new Set(kw.split("\n"));
 
   let EOF = false;
   let g_nLineNo = 0;
@@ -310,7 +283,7 @@ function lexer(file: string) {
     }
   }
 
-  function WordTypeToString(T: WORD_TYPE_ENUM) {
+  function WordTypeToString(T: number) {
     return WORD_TYPE_ENUM[T];
   }
   LexicalAnalysis();
@@ -318,7 +291,8 @@ function lexer(file: string) {
 }
 /*
 console.log(
-  lexer(`const c1=2,c2=4;
+  lexer(
+    `const c1=2,c2=4;
 var x,num,sum;
 procedure func1;
 var y;
@@ -340,6 +314,20 @@ begin
 	sum:=-10*c2/(2*sum+num);
 	write(num,sum);
 	;
-end.`)
+end.`,
+    `begin
+call
+const
+do
+end
+if
+odd
+procedure
+read
+then
+var
+while
+write`
+  )
 );
 */

@@ -1,4 +1,4 @@
-function lexer(file) {
+function lexer(file, kw) {
     let res = [];
     const log = false ? console.log : (...s) => { };
     const OK = 1;
@@ -6,56 +6,39 @@ function lexer(file) {
     const SPACE = " ";
     const TABLE = "\t";
     const RETURN = "\n";
-    let WORD_TYPE_ENUM;
-    (function (WORD_TYPE_ENUM) {
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["INVALID_WORD"] = 0] = "INVALID_WORD";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["IDENTIFIER"] = 1] = "IDENTIFIER";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["NUMBER"] = 2] = "NUMBER";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["CONST"] = 3] = "CONST";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["VAR"] = 4] = "VAR";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["PROCEDURE"] = 5] = "PROCEDURE";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["BEGIN"] = 6] = "BEGIN";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["END"] = 7] = "END";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["IF"] = 8] = "IF";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["THEN"] = 9] = "THEN";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["WHILE"] = 10] = "WHILE";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["DO"] = 11] = "DO";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["WRITE"] = 12] = "WRITE";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["READ"] = 13] = "READ";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["CALL"] = 14] = "CALL";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["LEFT_PARENTHESIS"] = 15] = "LEFT_PARENTHESIS";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["RIGHT_PARENTHESIS"] = 16] = "RIGHT_PARENTHESIS";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["COMMA"] = 17] = "COMMA";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["SEMICOLON"] = 18] = "SEMICOLON";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["PERIOD"] = 19] = "PERIOD";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["PLUS"] = 20] = "PLUS";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["MINUS"] = 21] = "MINUS";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["MULTIPLY"] = 22] = "MULTIPLY";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["DIVIDE"] = 23] = "DIVIDE";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["ODD"] = 24] = "ODD";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["EQL"] = 25] = "EQL";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["NEQ"] = 26] = "NEQ";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["LES"] = 27] = "LES";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["LEQ"] = 28] = "LEQ";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["GTR"] = 29] = "GTR";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["GEQ"] = 30] = "GEQ";
-        WORD_TYPE_ENUM[WORD_TYPE_ENUM["ASSIGN"] = 31] = "ASSIGN";
-    })(WORD_TYPE_ENUM || (WORD_TYPE_ENUM = {}));
-    const ReservedWordNameVsTypeTable = new Map([
-        ["begin", WORD_TYPE_ENUM.BEGIN],
-        ["call", WORD_TYPE_ENUM.CALL],
-        ["const", WORD_TYPE_ENUM.CONST],
-        ["do", WORD_TYPE_ENUM.DO],
-        ["end", WORD_TYPE_ENUM.END],
-        ["if", WORD_TYPE_ENUM.IF],
-        ["odd", WORD_TYPE_ENUM.ODD],
-        ["procedure", WORD_TYPE_ENUM.PROCEDURE],
-        ["read", WORD_TYPE_ENUM.READ],
-        ["then", WORD_TYPE_ENUM.THEN],
-        ["var", WORD_TYPE_ENUM.VAR],
-        ["while", WORD_TYPE_ENUM.WHILE],
-        ["write", WORD_TYPE_ENUM.WRITE],
+    function strEnum(o) {
+        return o.reduce((res, key, cur) => {
+            res[key] = cur;
+            res[cur] = key;
+            return res;
+        }, Object.create(null));
+    }
+    let WORD_TYPE_ENUM = strEnum([
+        ...new Set([
+            "INVALID_WORD",
+            "IDENTIFIER",
+            "NUMBER",
+            "LEFT_PARENTHESIS",
+            "RIGHT_PARENTHESIS",
+            "COMMA",
+            "SEMICOLON",
+            "PERIOD",
+            "PLUS",
+            "MINUS",
+            "MULTIPLY",
+            "DIVIDE",
+            "ODD",
+            "EQL",
+            "NEQ",
+            "LES",
+            "LEQ",
+            "GTR",
+            "GEQ",
+            "ASSIGN",
+            ...kw.toUpperCase().split("\n"),
+        ]),
     ]);
+    let ReservedWordNameVsTypeTable = new Map(kw.split("\n").map((k) => [k, eval(`WORD_TYPE_ENUM.${k.toUpperCase()}`)]));
     const SingleCharacterWordTypeTable = new Map([
         ["+", WORD_TYPE_ENUM.PLUS],
         ["-", WORD_TYPE_ENUM.MINUS],
@@ -69,21 +52,7 @@ function lexer(file) {
         ["#", WORD_TYPE_ENUM.NEQ],
         [";", WORD_TYPE_ENUM.SEMICOLON],
     ]);
-    const RESERVED_WORDS = new Set([
-        "begin",
-        "call",
-        "const",
-        "do",
-        "end",
-        "if",
-        "odd",
-        "procedure",
-        "read",
-        "then",
-        "var",
-        "while",
-        "write",
-    ]);
+    const RESERVED_WORDS = new Set(kw.split("\n"));
     let EOF = false;
     let g_nLineNo = 0;
     let g_Words = Array();
@@ -315,7 +284,8 @@ function lexer(file) {
 }
 /*
 console.log(
-  lexer(`const c1=2,c2=4;
+  lexer(
+    `const c1=2,c2=4;
 var x,num,sum;
 procedure func1;
 var y;
@@ -337,6 +307,20 @@ begin
     sum:=-10*c2/(2*sum+num);
     write(num,sum);
     ;
-end.`)
+end.`,
+    `begin
+call
+const
+do
+end
+if
+odd
+procedure
+read
+then
+var
+while
+write`
+  )
 );
 */

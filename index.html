@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>PL/0 Lexical</title>
 </head>
 
 <body>
@@ -13,12 +13,17 @@
     <div id="app">
         <div class="row">
             输入 PL/0 代码
-            <textarea id="input" v-model="file" style="height:600px;width:300px">{{file}}</textarea>
-            <button @click="demo"> demo </button>
-            <button @click="clear"> clear </button>
+            <textarea id="input" v-model="file" style="height:600px;width: fit-content;">{{file}}</textarea>
         </div>
+        <div class="row">
+            输入关键词 , 用回车分隔
+            <textarea id="kw" v-model="kw" style="height:600px;width: fit-content;">{{kw}}</textarea>
+        </div>
+        <button @click="demo"> demo </button>
+        <button @click="clear"> clear </button>
+        <button @click="keywordsInit"> keywordsInit </button>
         <div class="result">
-            <div v-for="item in lexer(this.file)">
+            <div v-for="item in lexer(this.file,kw)">
                 {{ item }}
             </div>
         </div>
@@ -56,6 +61,19 @@
         el: '#app',
         data: {
             file: "",
+            kw: `begin
+call
+const
+do
+end
+if
+odd
+procedure
+read
+then
+var
+while
+write`,
         },
         methods: {
             demo() {
@@ -85,6 +103,21 @@ end.`;
             },
             clear() {
                 this.file = ``;
+            },
+            keywordsInit() {
+                this.kw = `begin
+call
+const
+do
+end
+if
+odd
+procedure
+read
+then
+var
+while
+write`
             }
         }
     }
