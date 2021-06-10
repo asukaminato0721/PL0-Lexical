@@ -1,5 +1,5 @@
-function lexer(file, kw) {
-    let res = [];
+function lexer(输入的字符串, kw) {
+    let 返回的列表 = [];
     const log = false ? console.log : (...s) => { };
     const OK = 1;
     const ERROR = -1;
@@ -13,7 +13,7 @@ function lexer(file, kw) {
             return res;
         }, Object.create(null));
     }
-    let WORD_TYPE_ENUM = strEnum([
+    let 单词类型枚举值 = strEnum([
         ...new Set([
             "INVALID_WORD",
             "IDENTIFIER",
@@ -38,35 +38,34 @@ function lexer(file, kw) {
             ...kw.toUpperCase().split("\n"),
         ]),
     ]);
-    let ReservedWordNameVsTypeTable = new Map(kw.split("\n").map((k) => [k, WORD_TYPE_ENUM[k.toUpperCase()]]));
+    let 保留字单词映射类型表 = new Map(kw.split("\n").map((k) => [k, 单词类型枚举值[k.toUpperCase()]]));
     const SingleCharacterWordTypeTable = new Map([
-        ["+", WORD_TYPE_ENUM.PLUS],
-        ["-", WORD_TYPE_ENUM.MINUS],
-        ["*", WORD_TYPE_ENUM.MULTIPLY],
-        ["/", WORD_TYPE_ENUM.DIVIDE],
-        ["(", WORD_TYPE_ENUM.LEFT_PARENTHESIS],
-        [")", WORD_TYPE_ENUM.RIGHT_PARENTHESIS],
-        ["=", WORD_TYPE_ENUM.EQL],
-        [",", WORD_TYPE_ENUM.COMMA],
-        [".", WORD_TYPE_ENUM.PERIOD],
-        ["#", WORD_TYPE_ENUM.NEQ],
-        [";", WORD_TYPE_ENUM.SEMICOLON],
+        ["+", 单词类型枚举值.PLUS],
+        ["-", 单词类型枚举值.MINUS],
+        ["*", 单词类型枚举值.MULTIPLY],
+        ["/", 单词类型枚举值.DIVIDE],
+        ["(", 单词类型枚举值.LEFT_PARENTHESIS],
+        [")", 单词类型枚举值.RIGHT_PARENTHESIS],
+        ["=", 单词类型枚举值.EQL],
+        [",", 单词类型枚举值.COMMA],
+        [".", 单词类型枚举值.PERIOD],
+        ["#", 单词类型枚举值.NEQ],
+        [";", 单词类型枚举值.SEMICOLON],
     ]);
     let 目前行 = 1;
-    const RESERVED_WORDS = new Set(kw.split("\n"));
+    const 保留字 = new Set(kw.split("\n"));
     let EOF = false;
-    let g_Words = Array();
+    let 已处理的单词 = Array();
     function LexicalAnalysis() {
-        let nResult = GetAWord();
-        while (nResult === 1 && g_Words.length > 0) {
-            PrintInLexis(g_Words.length - 1);
+        let nResult;
+        while ((nResult = GetAWord()) === 1 && 已处理的单词.length > 0) {
+            PrintInLexis(已处理的单词.length - 1);
             log("打印了一个");
-            nResult = GetAWord();
         }
     }
-    let cACharacter = " ";
+    let 当前字符 = " ";
     function* generate() {
-        for (const char of file) {
+        for (const char of 输入的字符串) {
             if (char === "\n") {
                 目前行++;
             }
@@ -74,10 +73,10 @@ function lexer(file, kw) {
         }
     }
     const gen = generate();
-    const GetACharacterFromFile = () => {
+    const 读下一个字符 = () => {
         const o = gen.next();
         //@ts-ignore
-        cACharacter = o.value ?? "\n";
+        当前字符 = o.value ?? "\n";
         // @ts-ignore
         EOF = o.done;
     };
@@ -85,35 +84,36 @@ function lexer(file, kw) {
         log("GetAWord");
         const isalpha = (ch) => /^[A-Z]/i.test(ch);
         const isdigit = (ch) => /^[0-9]/.test(ch);
-        if (typeof cACharacter === "undefined") {
-            GetACharacterFromFile();
+        if (typeof 当前字符 === "undefined") {
+            读下一个字符();
         }
-        let szAWord = []; // 存累积的字母
+        let 累积的字母 = [];
         let nNumberValue = -99;
-        while ([SPACE, RETURN, TABLE].includes(cACharacter) && !EOF) {
-            GetACharacterFromFile();
+        while ([SPACE, RETURN, TABLE].includes(当前字符) && !EOF) {
+            读下一个字符();
             log("跳过空白字符");
         }
         if (!EOF) {
             // 找标识符或关键字
-            if (isalpha(cACharacter)) {
+            if (isalpha(当前字符) || 当前字符 === "_") {
                 log("isalpha");
                 do {
-                    szAWord.push(cACharacter);
-                    GetACharacterFromFile();
-                } while ((isalpha(cACharacter) || isdigit(cACharacter)) && !EOF); // fin a word
+                    累积的字母.push(当前字符);
+                    读下一个字符();
+                } while ((isalpha(当前字符) || isdigit(当前字符) || 当前字符 === "_") &&
+                    !EOF); // fin a word
                 if (!EOF) {
-                    g_Words.push({
+                    已处理的单词.push({
                         //@ts-ignore
-                        eType: RESERVED_WORDS.has(szAWord.join(""))
-                            ? ReservedWordNameVsTypeTable.get(szAWord.join(""))
-                            : WORD_TYPE_ENUM.IDENTIFIER,
-                        szName: szAWord.join(""),
-                        nLineNo: 目前行,
-                        nNumberValue,
+                        类型: 保留字.has(累积的字母.join(""))
+                            ? 保留字单词映射类型表.get(累积的字母.join(""))
+                            : 单词类型枚举值.IDENTIFIER,
+                        符号名称: 累积的字母.join(""),
+                        所在行数: 目前行,
+                        数字对应值: nNumberValue,
                     });
-                    szAWord = [];
-                    log(g_Words);
+                    累积的字母 = [];
+                    log(已处理的单词);
                     return OK;
                 }
                 else {
@@ -121,128 +121,128 @@ function lexer(file, kw) {
                     return ERROR;
                 }
             }
-            else if (isdigit(cACharacter)) {
+            else if (isdigit(当前字符)) {
                 log("isdigit");
                 do {
-                    szAWord.push(cACharacter);
-                    GetACharacterFromFile();
-                } while (isdigit(cACharacter) && !EOF);
+                    累积的字母.push(当前字符);
+                    读下一个字符();
+                } while (isdigit(当前字符) && !EOF);
                 if (!EOF) {
-                    g_Words.push({
-                        eType: WORD_TYPE_ENUM.NUMBER,
-                        szName: szAWord.join(""),
-                        nNumberValue: parseInt(szAWord.join("")),
-                        nLineNo: 目前行,
+                    已处理的单词.push({
+                        类型: 单词类型枚举值.NUMBER,
+                        符号名称: 累积的字母.join(""),
+                        数字对应值: parseInt(累积的字母.join("")),
+                        所在行数: 目前行,
                     });
-                    log(szAWord, "isdigit");
-                    szAWord = [];
+                    log(累积的字母, "isdigit");
+                    累积的字母 = [];
                     return OK;
                 }
                 else {
                     return ERROR;
                 }
             }
-            else if (cACharacter === ":") {
+            else if (当前字符 === ":") {
                 log(":");
-                GetACharacterFromFile();
+                读下一个字符();
                 //@ts-ignore
-                if (cACharacter === "=") {
+                if (当前字符 === "=") {
                     log("=");
-                    g_Words.push({
-                        eType: WORD_TYPE_ENUM.ASSIGN,
-                        szName: ":=",
-                        nLineNo: 目前行,
-                        nNumberValue,
+                    已处理的单词.push({
+                        类型: 单词类型枚举值.ASSIGN,
+                        符号名称: ":=",
+                        所在行数: 目前行,
+                        数字对应值: nNumberValue,
                     });
-                    GetACharacterFromFile();
+                    读下一个字符();
                     return OK;
                 }
             }
-            else if (cACharacter === "<") {
-                GetACharacterFromFile();
+            else if (当前字符 === "<") {
+                读下一个字符();
                 //@ts-ignore
-                if (cACharacter === "=") {
-                    g_Words.push({
-                        eType: WORD_TYPE_ENUM.LEQ,
-                        szName: "<=",
-                        nLineNo: 目前行,
-                        nNumberValue,
+                if (当前字符 === "=") {
+                    已处理的单词.push({
+                        类型: 单词类型枚举值.LEQ,
+                        符号名称: "<=",
+                        所在行数: 目前行,
+                        数字对应值: nNumberValue,
                     });
-                    GetACharacterFromFile();
+                    读下一个字符();
                     return OK;
                 }
                 else {
-                    g_Words.push({
-                        eType: WORD_TYPE_ENUM.LES,
-                        szName: "<",
-                        nLineNo: 目前行,
-                        nNumberValue,
+                    已处理的单词.push({
+                        类型: 单词类型枚举值.LES,
+                        符号名称: "<",
+                        所在行数: 目前行,
+                        数字对应值: nNumberValue,
                     });
                     return OK;
                 }
             }
-            else if (cACharacter === ">") {
-                GetACharacterFromFile();
+            else if (当前字符 === ">") {
+                读下一个字符();
                 //@ts-ignore
-                if (cACharacter === "=") {
-                    g_Words.push({
-                        eType: WORD_TYPE_ENUM.GEQ,
-                        szName: ">=",
-                        nLineNo: 目前行,
-                        nNumberValue,
+                if (当前字符 === "=") {
+                    已处理的单词.push({
+                        类型: 单词类型枚举值.GEQ,
+                        符号名称: ">=",
+                        所在行数: 目前行,
+                        数字对应值: nNumberValue,
                     });
-                    GetACharacterFromFile();
+                    读下一个字符();
                 }
                 else {
-                    g_Words.push({
-                        eType: WORD_TYPE_ENUM.GTR,
-                        szName: ">",
-                        nLineNo: 目前行,
-                        nNumberValue,
+                    已处理的单词.push({
+                        类型: 单词类型枚举值.GTR,
+                        符号名称: ">",
+                        所在行数: 目前行,
+                        数字对应值: nNumberValue,
                     });
                 }
                 return OK;
             }
             else {
-                g_Words.push({
-                    eType: SingleCharacterWordTypeTable.get(cACharacter) ??
-                        WORD_TYPE_ENUM.INVALID_WORD,
-                    szName: cACharacter,
-                    nLineNo: 目前行,
-                    nNumberValue,
+                已处理的单词.push({
+                    类型: SingleCharacterWordTypeTable.get(当前字符) ??
+                        单词类型枚举值.INVALID_WORD,
+                    符号名称: 当前字符,
+                    所在行数: 目前行,
+                    数字对应值: nNumberValue,
                 });
-                GetACharacterFromFile();
+                读下一个字符();
                 return OK;
             }
         }
         return ERROR;
     }
-    function PrintInLexis(nIndex) {
-        let szWordName = g_Words[nIndex].szName;
-        let szWordType = WordTypeToString(g_Words[nIndex].eType);
-        let line = g_Words[nIndex].nLineNo;
-        switch (g_Words[nIndex].eType) {
-            case WORD_TYPE_ENUM.IDENTIFIER:
-                res.push([nIndex, line, szWordName, szWordType]);
+    function PrintInLexis(编号) {
+        let 符号名 = 已处理的单词[编号].符号名称;
+        let 符号类型 = WordTypeToString(已处理的单词[编号].类型);
+        let 行数 = 已处理的单词[编号].所在行数;
+        switch (已处理的单词[编号].类型) {
+            case 单词类型枚举值.IDENTIFIER:
+                返回的列表.push([编号, 行数, 符号名, 符号类型]);
                 break;
-            case WORD_TYPE_ENUM.NUMBER:
-                res.push([
-                    nIndex,
-                    line,
-                    szWordName,
-                    szWordType,
-                    g_Words[nIndex].nNumberValue,
+            case 单词类型枚举值.NUMBER:
+                返回的列表.push([
+                    编号,
+                    行数,
+                    符号名,
+                    符号类型,
+                    已处理的单词[编号].数字对应值,
                 ]);
                 break;
             default:
-                res.push([nIndex, line, szWordName, szWordType]);
+                返回的列表.push([编号, 行数, 符号名, 符号类型]);
         }
     }
     function WordTypeToString(T) {
-        return WORD_TYPE_ENUM[T];
+        return 单词类型枚举值[T];
     }
     LexicalAnalysis();
-    return res;
+    return 返回的列表;
 }
 console.log(lexer(`const c1=2,c2=4;
 var x,num,sum;
